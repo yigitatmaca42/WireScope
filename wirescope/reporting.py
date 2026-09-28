@@ -24,6 +24,10 @@ def render_header(console: Console, result: AnalysisResult) -> None:
         f"Duration: [bold]{human_duration(cap.duration_seconds)}[/bold]   "
         f"Size: [bold]{human_bytes(cap.total_bytes)}[/bold]"
     )
+    if result.malformed_packet_count:
+        console.print(
+            f"[yellow]{result.malformed_packet_count} packet(s) could not be parsed and were skipped.[/yellow]"
+        )
     console.print()
 
 

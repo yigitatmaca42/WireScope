@@ -34,6 +34,20 @@ Concretely, for WireScope:
 - WireScope's parsers are written defensively (bounds-checked slicing,
   `None` returns instead of exceptions on malformed structures), but "we
   tried to be careful" is not the same guarantee as a security audit.
+- As defense in depth on top of that, every packet is processed inside a
+  try/except: if a single packet still manages to trigger an unexpected
+  exception (a Scapy bug, an edge case the hand-rolled HTTP/TLS parsers
+  didn't anticipate, ...), that one packet is skipped and counted in the
+  report's `malformed_packet_count` rather than aborting analysis of the
+  rest of the capture.
+- CSV exports neutralize values that would otherwise be interpreted as a
+  spreadsheet formula (a cell starting with `=`, `+`, `-`, or `@` - "CSV
+  injection"/"formula injection") before writing them, since any
+  capture-derived string (a DNS query name, an HTTP header, ...) is
+  attacker-influenceable and CSV reports are routinely opened in Excel/
+  LibreOffice/Sheets. The HTML report separately HTML-escapes every
+  capture-derived string for the same reason (attacker-influenceable data
+  rendered in a browser).
 - If you're analyzing a capture from an untrusted or adversarial source
   (e.g. a CTF challenge, a suspected-malicious capture from an incident),
   consider running WireScope in an isolated environment (container, VM, or

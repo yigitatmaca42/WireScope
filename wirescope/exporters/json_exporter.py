@@ -35,6 +35,7 @@ def to_json_dict(result: AnalysisResult) -> dict[str, Any]:
             "tcp_flags": result.tcp_flag_stats.as_dict(),
             "high_entropy_packet_count": result.high_entropy_packet_count,
             "collection_limits": result.limits.as_dict(),
+            "malformed_packet_count": result.malformed_packet_count,
         },
         "hosts": [h.as_dict() for h in result.top_hosts(n=len(result.hosts))],
         "ports": {

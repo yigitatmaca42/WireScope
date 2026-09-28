@@ -59,6 +59,17 @@ details > summary { cursor: pointer; }
 .finding .title { font-weight: 600; }
 .finding .evidence { color: var(--text-muted); font-size: .82rem; margin-top: .4rem; }
 .caveat { color: var(--text-muted); font-size: .82rem; margin: .5rem 0 1rem; }
+.table-wrap { overflow-x: auto; }
+@media (max-width: 480px) {
+  header { padding: 1.5rem 1rem 1rem; }
+  main { padding: 1rem; }
+  .bar-label { width: 90px; }
+  .bar-value { width: 60px; font-size: .72rem; }
+}
+@media print {
+  body { background: #fff; color: #000; }
+  .bar-track, .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 """
 
 
@@ -113,7 +124,7 @@ def _table(headers: list[str], rows: list[list[str]], empty_message: str) -> str
     body = "".join(
         "<tr>" + "".join(f"<td>{cell}</td>" for cell in row) + "</tr>" for row in rows
     )
-    return f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+    return f"<div class='table-wrap'><table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>"
 
 
 def render_html(result: AnalysisResult) -> str:
@@ -231,6 +242,7 @@ def render_html(result: AnalysisResult) -> str:
 <section>
   <h2>Capture Overview</h2>
   <div class="stat-grid">{stat_cards}</div>
+  {f"<p class='caveat'>{result.malformed_packet_count} packet(s) could not be parsed and were skipped rather than aborting the analysis.</p>" if result.malformed_packet_count else ""}
 </section>
 
 <section>
