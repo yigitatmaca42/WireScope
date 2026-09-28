@@ -7,7 +7,15 @@ from wirescope.analyzer import Analyzer
 from wirescope.exporters.csv_exporter import write_csv
 from wirescope.exporters.html_exporter import render_html, write_html
 from wirescope.exporters.json_exporter import to_json_dict, write_json
-from wirescope.models import AnalysisResult, CaptureInfo, DnsRecord, Finding, HttpTransaction, Severity, TlsInfo
+from wirescope.models import (
+    AnalysisResult,
+    CaptureInfo,
+    DnsRecord,
+    Finding,
+    HttpTransaction,
+    Severity,
+    TlsInfo,
+)
 
 
 def test_json_export_schema(sample_pcap_path):

@@ -93,6 +93,13 @@ def _apply_ioc(result: AnalysisResult, ioc_path: Path | None) -> None:
     except OSError as exc:
         error_console.print(f"[bold red]Error reading IOC file:[/bold red] {exc}")
         raise typer.Exit(code=1) from None
+    if iocs.malformed_lines:
+        examples = ", ".join(f"line {n}: {text!r}" for n, text in iocs.malformed_lines[:3])
+        more = f" (+{len(iocs.malformed_lines) - 3} more)" if len(iocs.malformed_lines) > 3 else ""
+        error_console.print(
+            f"[yellow]Warning:[/yellow] {len(iocs.malformed_lines)} IOC line(s) were neither a "
+            f"valid IP nor a plausible domain and were ignored: {examples}{more}"
+        )
     result.findings.extend(match_iocs(result, iocs))
 
 
@@ -145,39 +152,54 @@ def main(
     quiet: Annotated[bool, typer.Option("-q", "--quiet", help="Suppress the terminal report (useful with --json/--csv/--html).")] = False,
 ) -> None:
     _configure_logging(verbose)
-    packet_filter = _build_filter(ip, port, protocol)
-    result = _analyze_with_progress(pcap, packet_filter, verbose)
-    _finish(result)
-    _apply_ioc(result, ioc)
+    try:
+        packet_filter = _build_filter(ip, port, protocol)
+        result = _analyze_with_progress(pcap, packet_filter, verbose)
+        _finish(result)
+        _apply_ioc(result, ioc)
 
-    if not quiet:
-        any_section = any([summary, dns, http, tls, conversations, findings])
+        if not quiet:
+            any_section = any([summary, dns, http, tls, conversations, findings])
 
-        reporting.render_header(console, result)
+            reporting.render_header(console, result)
 
-        if not any_section or summary:
-            reporting.render_summary(console, result)
-            console.print()
-            reporting.render_hosts(console, result)
-            console.print()
-            reporting.render_ports(console, result)
-        if dns:
-            console.print()
-            reporting.render_dns(console, result)
-        if http:
-            console.print()
-            reporting.render_http(console, result)
-        if tls:
-            console.print()
-            reporting.render_tls(console, result)
-        if conversations:
-            console.print()
-            reporting.render_conversations(console, result)
-        if findings or not any_section:
-            console.print()
-            reporting.render_findings(console, result)
+            if not any_section or summary:
+                reporting.render_summary(console, result)
+                console.print()
+                reporting.render_hosts(console, result)
+                console.print()
+                reporting.render_ports(console, result)
+            if dns:
+                console.print()
+                reporting.render_dns(console, result)
+            if http:
+                console.print()
+                reporting.render_http(console, result)
+            if tls:
+                console.print()
+                reporting.render_tls(console, result)
+            if conversations:
+                console.print()
+                reporting.render_conversations(console, result)
+            if findings or not any_section:
+                console.print()
+                reporting.render_findings(console, result)
 
-    _handle_exports(result, json_out, csv_out, html_out)
+        _handle_exports(result, json_out, csv_out, html_out)
+    except typer.Exit:
+        # Already a clean, intentional exit (WireScopeError/IOC/export
+        # errors above already printed their own message) - let it through
+        # unchanged rather than treating it as an unexpected error below.
+        raise
+    except KeyboardInterrupt:
+        error_console.print("\n[bold yellow]Analysis interrupted.[/bold yellow]")
+        raise typer.Exit(code=130) from None
+    except Exception as exc:  # noqa: BLE001 - last-resort net for genuinely
+        # unexpected bugs; every known failure mode above already has its
+        # own specific, clean handling. Exit code 2 distinguishes this from
+        # the code-1 "bad input" exits above.
+        _print_clean_error(exc, verbose)
+        raise typer.Exit(code=2) from None
 
 
 def _main() -> None:
