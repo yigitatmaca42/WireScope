@@ -354,11 +354,17 @@ class CollectionLimits:
     max_http_transactions: int = 20_000
     max_tls_records: int = 20_000
     max_conversations: int = 100_000
+    max_hosts: int = 200_000
+    max_ports: int = 100_000
+    max_arp_entries: int = 100_000
 
     dns_truncated: bool = False
     http_truncated: bool = False
     tls_truncated: bool = False
     conversations_truncated: bool = False
+    hosts_truncated: bool = False
+    ports_truncated: bool = False
+    arp_truncated: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -366,6 +372,9 @@ class CollectionLimits:
             "http_truncated": self.http_truncated,
             "tls_truncated": self.tls_truncated,
             "conversations_truncated": self.conversations_truncated,
+            "hosts_truncated": self.hosts_truncated,
+            "ports_truncated": self.ports_truncated,
+            "arp_truncated": self.arp_truncated,
         }
 
 
@@ -393,6 +402,10 @@ class AnalysisResult:
     # Per-second timeline: {int(timestamp): [packet_count, byte_count]}.
     # Bounded by the capture's duration in seconds, not by packet count.
     timeline: dict[int, list[int]] = field(default_factory=dict)
+    # Packets where per-packet processing raised and was skipped - see
+    # Analyzer._process_packet's try/except. Never silent: surfaced in the
+    # capture summary so a run with a nonzero count is visibly flagged.
+    malformed_packet_count: int = 0
 
     def top_hosts(self, n: int = 10) -> list[HostStats]:
         return sorted(self.hosts.values(), key=lambda h: h.packet_count, reverse=True)[:n]

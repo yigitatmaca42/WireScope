@@ -43,6 +43,7 @@ from wirescope.models import (
     AnalysisResult,
     ArpEntry,
     CaptureInfo,
+    CollectionLimits,
     Conversation,
     HostStats,
     PortStats,
@@ -98,7 +99,15 @@ class Analyzer:
             with PcapReader(str(self.path)) as reader:
                 for pkt in reader:
                     packet_count += 1
-                    self._process_packet(pkt, result)
+                    try:
+                        self._process_packet(pkt, result)
+                    except Exception:  # noqa: BLE001 - one malformed/unexpected
+                        # packet must never abort analysis of the rest of the
+                        # capture. Scapy's dissectors are generally robust,
+                        # but WireScope treats every capture as untrusted
+                        # input (see SECURITY.md) and degrades to "skip and
+                        # count" rather than crash on the first oddity.
+                        result.malformed_packet_count += 1
                     if progress_callback is not None and packet_count % 500 == 0:
                         progress_callback(packet_count)
         except Scapy_Exception as exc:
@@ -200,9 +209,9 @@ class Analyzer:
         if src_ip and dst_ip:
             self._update_hosts(result, src_ip, dst_ip, length, sport, dport)
             if sport is not None:
-                self._update_ports(result.ports_src, sport, "TCP" if has_tcp else "UDP")
+                self._update_ports(result.ports_src, sport, "TCP" if has_tcp else "UDP", result.limits)
             if dport is not None:
-                self._update_ports(result.ports_dst, dport, "TCP" if has_tcp else "UDP")
+                self._update_ports(result.ports_dst, dport, "TCP" if has_tcp else "UDP", result.limits)
             if has_tcp or has_udp:
                 self._update_conversation(
                     result, src_ip, sport, dst_ip, dport, "TCP" if has_tcp else "UDP", length, timestamp
@@ -248,12 +257,16 @@ class Analyzer:
         if has_arp:
             arp_event = parse_arp(pkt)
             if arp_event is not None:
-                entry = result.arp_entries.setdefault(arp_event.sender_ip, ArpEntry(ip=arp_event.sender_ip))
-                entry.mac_addresses.add(arp_event.sender_mac)
-                if arp_event.is_request:
-                    entry.requests += 1
+                arp_entries = result.arp_entries
+                if arp_event.sender_ip not in arp_entries and len(arp_entries) >= result.limits.max_arp_entries:
+                    result.limits.arp_truncated = True
                 else:
-                    entry.replies += 1
+                    entry = arp_entries.setdefault(arp_event.sender_ip, ArpEntry(ip=arp_event.sender_ip))
+                    entry.mac_addresses.add(arp_event.sender_mac)
+                    if arp_event.is_request:
+                        entry.requests += 1
+                    else:
+                        entry.replies += 1
 
     @staticmethod
     def _update_hosts(
@@ -264,8 +277,14 @@ class Analyzer:
         sport: int | None,
         dport: int | None,
     ) -> None:
-        src = result.hosts.setdefault(src_ip, HostStats(ip=src_ip))
-        dst = result.hosts.setdefault(dst_ip, HostStats(ip=dst_ip))
+        limits = result.limits
+        hosts = result.hosts
+        for ip in (src_ip, dst_ip):
+            if ip not in hosts and len(hosts) >= limits.max_hosts:
+                limits.hosts_truncated = True
+                return
+        src = hosts.setdefault(src_ip, HostStats(ip=src_ip))
+        dst = hosts.setdefault(dst_ip, HostStats(ip=dst_ip))
         src.packet_count += 1
         dst.packet_count += 1
         src.bytes_sent += length
@@ -278,8 +297,13 @@ class Analyzer:
             dst.ports_used.add(dport)
 
     @staticmethod
-    def _update_ports(bucket: dict[tuple[int, str], PortStats], port: int, protocol: str) -> None:
+    def _update_ports(
+        bucket: dict[tuple[int, str], PortStats], port: int, protocol: str, limits: CollectionLimits
+    ) -> None:
         key = (port, protocol)
+        if key not in bucket and len(bucket) >= limits.max_ports:
+            limits.ports_truncated = True
+            return
         stats = bucket.setdefault(
             key, PortStats(port=port, protocol=protocol, service_name=lookup_service(port, protocol))
         )
