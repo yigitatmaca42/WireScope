@@ -1,4 +1,4 @@
-# WireScope v0.1.0 - Release Notes (draft)
+# WireScope v1.0.0 - Release Notes
 
 ## Highlights
 
@@ -9,8 +9,8 @@ report to hand off. It never loads a capture wholesale into memory, never
 decrypts TLS, and never performs active network actions (no scanning, no
 injection) - it is read-only, offline analysis.
 
-This is the first tagged release, after an initial build followed by a
-dedicated hardening/code-review pass (see CHANGELOG's "Unreleased"
+This is the first public release, after an initial build followed by a
+dedicated hardening/code-review pass (see the CHANGELOG's 1.0.0
 section for the exact list) that focused on making the existing feature
 set more correct and safer rather than growing it further: per-packet
 crash isolation, CSV/HTML output-injection safeguards, bounded memory

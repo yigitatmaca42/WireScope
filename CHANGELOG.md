@@ -2,7 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
-## [Unreleased] - hardening pass
+This project follows [Semantic Versioning](https://semver.org/): PATCH for
+backward-compatible bug/parser/security fixes, MINOR for new
+backward-compatible features, MAJOR for breaking CLI or report-schema
+changes. The JSON/report schema carries its own `schema_version`, separate
+from the package version.
+
+## [1.0.0] - 2026-10-01
+
+First public, stable release. It contains the initial feature set (see
+[0.1.0] below, which was never published) plus the hardening pass listed
+here. No new analysis features were added between 0.1.0 and 1.0.0; the
+JSON/report `schema_version` remains `0.1.0`.
 
 ### Fixed
 
@@ -48,7 +59,7 @@ All notable changes to this project are documented in this file.
 
 ## [0.1.0] - 2026-09-28
 
-Initial release.
+Initial internal build (never published; superseded by 1.0.0).
 
 ### Added
 

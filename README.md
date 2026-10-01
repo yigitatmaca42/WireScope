@@ -212,18 +212,35 @@ traffic baseline. Expect false positives on legitimate NAT gateways, DHCP
 churn, CDNs, and busy servers. See [SECURITY.md](SECURITY.md) for more on
 what WireScope does and doesn't claim.
 
+## Known Limitations
+
+- IOC matching covers IPs and domains only - no hash or URL IOCs.
+- TLS support is limited to SNI and record-layer version: no X.509
+  certificate parsing, no JA3/JA4 fingerprinting, no decryption.
+- No HTTP file/object extraction.
+- Scapy is the only packet backend (no PyShark/tshark).
+- Terminal-only: no TUI or GUI. HTML reports are static.
+- Heuristic thresholds are untuned starting points and will produce false
+  positives on real-world traffic.
+
 ## Roadmap
 
-Shipped in 0.1.0: everything listed under Features above.
+Shipped in 1.0.0: everything listed under Features above.
 
-- **v0.2** - IOC hash/URL support, PyShark/tshark as an alternate backend
-- **v0.3** - HTML report interactivity (client-side filtering/sorting),
-  JA3/JA4 fingerprinting
-- **v0.4** - Plaintext HTTP file/object extraction, TUI
-- **v1.0** - Stable plugin architecture, GUI
+WireScope follows [Semantic Versioning](https://semver.org/): `1.0.x` for
+backward-compatible fixes, `1.x.0` for new backward-compatible features,
+`2.0.0` for breaking CLI/report-schema changes or major architecture
+changes. The JSON report has its own `schema_version` (see
+[docs/report-schema.md](docs/report-schema.md)), separate from the package
+version.
 
-Nothing above is implemented yet - it's listed here, not silently implied
-by a feature that only sort-of works.
+Planned (none of this is implemented yet - it is listed here so it is not
+silently implied by a feature that only sort-of works):
+
+- **1.x** - IOC hash/URL support, PyShark/tshark as an alternate backend,
+  TLS certificate (X.509) parsing and JA3/JA4 fingerprinting, plaintext
+  HTTP file/object extraction, HTML report interactivity, TUI
+- **2.0** - Plugin architecture, GUI (large architectural changes)
 
 ## Contributing
 

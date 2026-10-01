@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wirescope"
-version = "0.1.0"
+version = "1.0.0"
 description = "Lightweight PCAP Analysis & Network Forensics Toolkit"
 readme = "README.md"
 requires-python = ">=3.11"

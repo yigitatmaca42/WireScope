@@ -8,7 +8,8 @@ for all three export formats.
 ## Versioning
 
 Every export includes `"schema_version"` (currently `"0.1.0"`, tracked in
-`wirescope.exporters.json_exporter.SCHEMA_VERSION`). Within a `0.x` schema
+`wirescope.exporters.json_exporter.SCHEMA_VERSION`). This is independent of
+the package version: WireScope 1.0.0 emits schema `0.1.0`. Within a `0.x` schema
 version, fields may be added but existing fields will not be renamed or
 removed without a version bump. There is no automated migration between
 versions yet - consumers should check `schema_version` and fail closed on
