@@ -2,6 +2,50 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased] - hardening pass
+
+### Fixed
+
+- Analyzer: a single malformed/unexpected packet no longer aborts analysis
+  of the rest of the capture - per-packet processing is now isolated in a
+  try/except, with skipped packets counted in `malformed_packet_count`
+  (surfaced in the terminal header, JSON, and HTML report).
+- CSV export: values starting with `=`, `+`, `-`, or `@` are now
+  neutralized against spreadsheet "formula injection" before being
+  written (capture-derived strings are untrusted input).
+- `CollectionLimits` now also bounds `hosts`, `ports_src`/`ports_dst`, and
+  `arp_entries` (previously only DNS/HTTP/TLS/conversations were capped),
+  closing a memory-growth gap on captures with many unique IPs/ports.
+- IOC domain matching is now suffix-based (`example.com` also matches
+  `sub.example.com`) instead of exact-match only, and is documented as
+  such; malformed IOC file lines are now reported as a warning instead of
+  being silently treated as unmatchable domains.
+- CLI: unexpected internal errors (anything not already a `WireScopeError`)
+  now get the same clean-error treatment as known errors, with a distinct
+  exit code (2) from "bad input" errors (1); Ctrl+C now prints a clean
+  "Analysis interrupted." instead of a raw `KeyboardInterrupt` traceback
+  (exit 130).
+- HTML report: tables now scroll horizontally on narrow viewports instead
+  of overflowing; added a small-viewport media query and a minimal print
+  stylesheet.
+- Local default branch renamed `master` -> `main` to match the CI
+  workflow's trigger and modern convention (no history rewritten).
+
+### Added
+
+- Dedicated flow-normalization tests (A<->B folding across IPv4/IPv6/
+  TCP/UDP, non-folding of distinct 5-tuples, order-independence).
+- A regression test proving a malformed DNS packet is skipped rather than
+  crashing the run, with the rest of the capture still processed.
+- A regression test proving the HTML report HTML-escapes every
+  capture-derived field (DNS query name, HTTP host/path/user-agent, TLS
+  SNI, finding text) - this was already correct, now pinned down.
+- Malformed/fuzz-lite input tests for the HTTP and TLS parsers (random
+  bytes, truncation at every byte offset of a valid TLS ClientHello,
+  case-insensitive Host header, unknown TLS extensions before SNI).
+- `docs/report-schema.md`: field-by-field documentation of the JSON
+  export schema (also covers CSV/HTML, which share the same model).
+
 ## [0.1.0] - 2026-09-28
 
 Initial release.

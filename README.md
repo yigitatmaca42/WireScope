@@ -40,7 +40,9 @@ scoped) starting point for PCAP tooling rather than a 200-line script.
   [Detection Philosophy](#detection-philosophy) below - none of this is a
   verdict.
 - **Simple IOC matching** - a flat text file of IPs/domains, checked against
-  what showed up in the capture.
+  what showed up in the capture. Domain matching is suffix-based (an IOC
+  entry of `example.com` also matches `sub.example.com`), IP matching
+  supports both IPv4 and IPv6.
 - **Filters** - `--ip`, `--port`, `--protocol`, combinable, applied
   consistently across the whole analysis (including the summary).
 - **Exports** - structured JSON, per-category CSV files, and a
@@ -156,7 +158,8 @@ about.)
 
 - **JSON** (`--json report.json`) - stable top-level keys: `capture`,
   `statistics`, `hosts`, `ports` (`source`/`destination`), `conversations`,
-  `dns`, `http`, `tls`, `arp`, `findings`.
+  `dns`, `http`, `tls`, `arp`, `findings`. Field-by-field reference:
+  [docs/report-schema.md](docs/report-schema.md).
 - **CSV** (`--csv reports/`) - `hosts.csv`, `ports.csv`,
   `conversations.csv`, `dns.csv`, `http.csv`, `findings.csv`.
 - **HTML** (`--html report.html`) - a single offline file: capture
